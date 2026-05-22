@@ -1,0 +1,1820 @@
+1. Document
+===========
+
+A Sapphire document is not merely formatted text. It is a body of data
+interpreted through four distinct layers:
+
+- data,
+- semantic sections,
+- structural sections,
+- style sections.
+
+These layers are intentionally separate. A plain string of characters can
+technically encode almost anything: a list can be written as comma-separated
+values, and an image can be reduced to a long sequence of bytes represented as
+text. However, encoding something is not the same as communicating it well.
+
+Sapphire treats a document as a composition of content, meaning, structure, and
+presentation. The goal is to let an author describe each concern directly,
+instead of forcing every concern into a single stream of punctuation and
+convention.
+
+
+1.1 Data
+--------
+
+Data is the raw sequence of symbols from which the document is built. At this
+level, the document has no semantic meaning, no layout, no styling, and no
+special rendering behavior. It is only content before interpretation.
+
+This layer must remain simple and reliable. It should preserve the author's
+symbols exactly and provide the stable foundation on which the other layers are
+applied.
+
+Examples of data include:
+
+- plain text,
+- numbers,
+- identifiers,
+- encoded binary content,
+- literal character sequences used by higher-level constructs.
+
+The data layer answers the question:
+
+"What symbols exist in the document?"
+
+
+1.2 Semantic Sections
+---------------------
+
+Semantic sections describe the meaning and organization of the document. They
+turn a flat stream of symbols into a structured object that can be understood,
+navigated, summarized, transformed, or referenced.
+
+A document typically contains semantic units such as:
+
+- paragraphs,
+- sections,
+- subsections,
+- headings,
+- notes,
+- references,
+- named anchors.
+
+These units form a tree-like structure rather than a purely linear sequence.
+The same visible text can carry different meaning depending on where it appears
+in that tree. For example, a sentence inside an abstract, a warning, a caption,
+or a conclusion may need to be interpreted differently even if its characters
+are identical.
+
+The semantic layer answers the question:
+
+"What role does this content play in the document?"
+
+
+1.2.1 Standard Semantics
+------------------------
+
+Standard semantics are document concepts that are broadly understood across
+writing systems and publishing formats. Their exact behavior may vary from one
+environment to another, but their purpose is familiar.
+
+Examples include:
+
+- document,
+- section,
+- subsection,
+- paragraph,
+- heading,
+- quotation,
+- list item,
+- footnote,
+- citation.
+
+Sapphire should make these common concepts easy to express, easy to parse, and
+easy to transform. They are the basic vocabulary of document structure.
+
+
+1.2.2 Non-Standard Semantics
+----------------------------
+
+Non-standard semantics are author-defined or project-defined meanings that do
+not belong to the universal vocabulary of documents.
+
+An author may need to mark a section as:
+
+- a theorem,
+- a warning,
+- a character profile,
+- a legal clause,
+- a design decision,
+- an implementation note,
+- a summary target,
+- a region that must receive a stable identifier.
+
+These meanings are not merely decorative. They may affect navigation,
+summarization, rendering, validation, indexing, export, or interaction.
+
+Sapphire should therefore support semantic anchors and semantic tags as
+first-class document features. A named identifier should not have to be hidden
+inside styling syntax or simulated with fragile formatting conventions.
+
+The non-standard semantic layer answers the question:
+
+"What special meaning does the author or system assign to this content?"
+
+
+1.3 Structural Sections
+-----------------------
+
+Structural sections describe document objects that should not be treated as
+ordinary paragraphs, even though they can still be encoded as text at the data
+level.
+
+Examples include:
+
+- images,
+- interactive sections,
+- videos,
+- embedded content,
+- lists,
+- tables,
+- diagrams,
+- code blocks,
+- mathematical displays,
+- forms or controls.
+
+These structures exist because humans do not consume all information best as a
+linear sentence stream. Some information is clearer when spatial, tabular,
+visual, interactive, or media-based.
+
+For example:
+
+- a table helps readers compare values,
+- an image communicates shape and visual relation,
+- a list exposes sequence or grouping,
+- a diagram reveals dependency or flow,
+- an interactive section lets the reader manipulate state.
+
+At the data level, all of these could be described as text. At the document
+level, they deserve specialized representation because they create a different
+reading experience.
+
+The structural layer answers the question:
+
+"What kind of document object is this, and how should it behave?"
+
+
+1.4 Style Sections
+------------------
+
+Style sections describe presentation. They control how document content appears
+when rendered, without changing the underlying data or semantic meaning.
+
+Style may include:
+
+- color,
+- font family,
+- font size,
+- font weight,
+- spacing,
+- alignment,
+- borders,
+- numbering,
+- syntax highlighting,
+- responsive layout behavior.
+
+Style is important, but it should remain distinct from meaning. A red paragraph
+is not automatically a warning. A bold phrase is not automatically a keyword. A
+large line of text is not automatically a heading. Styling can support meaning,
+but it should not be the only place where meaning lives.
+
+Sapphire should allow style to be attached deliberately to semantic or
+structural regions, while still preserving the ability to inspect, transform, or
+render the document without depending on a particular visual theme.
+
+The style layer answers the question:
+
+"How should this content appear when presented?"
+
+
+1.5 Design Principle
+--------------------
+
+The central design principle is separation without isolation.
+
+Data, semantics, structure, and style must be distinguishable, but they must
+also work together. A table may have semantic meaning. A warning may have a
+distinct visual style. An image may require a caption, identifier, and layout
+rule. A paragraph may carry both standard semantics and a project-specific tag.
+
+Sapphire should make these relationships explicit. The format should preserve
+the raw content, expose the document's meaning, support rich structural
+objects, and allow styling without collapsing all four concepts into one
+ambiguous notation.
+
+In short:
+
+- data is what exists,
+- semantics describe what it means,
+- structure describes what kind of object it is,
+- style describes how it is presented.
+
+A strong document format should handle all four cleanly.
+
+==================================================
+
+2. Semantics
+============
+
+Semantics describe the meaning and organization of a document before any
+particular visual style is applied. They tell Sapphire what a region of content
+is, where it belongs, what it contains, and how it may be referenced or
+transformed.
+
+The semantic layer is therefore the document's conceptual skeleton. It is not
+concerned with color, font, spacing, or rendering. It is concerned with role,
+scope, order, and relationship.
+
+
+2.1 Standard Semantics
+----------------------
+
+Standard semantics are the built-in document concepts that Sapphire recognizes
+without requiring the author to define them manually.
+
+The word "standard" does not mean that every writing system defines these
+concepts in exactly the same way. A paragraph in prose, a paragraph in law, a
+paragraph in HTML, and a paragraph in a plain-text note may have different
+recognition rules. Likewise, the boundary between a chapter and a section is
+often editorial rather than universal.
+
+For Sapphire, standard semantics are not universal truths. They are the default
+semantic vocabulary of the format.
+
+Sapphire recognizes the following standard semantic units:
+
+- document,
+- chapter,
+- section,
+- subsection,
+- sub-subsection,
+- sub-sub-subsection,
+- sub-sub-sub-subsection,
+- paragraph,
+- subparagraph,
+- sentence.
+
+These units establish the basic tree of a document. They are semantic because
+they describe what the content is doing, not merely how it should look.
+
+
+2.1.1 Standard Semantic Hierarchy
+---------------------------------
+
+Sapphire organizes standard semantics as a nested hierarchy.
+
+The default hierarchy is:
+
+- document,
+- chapter,
+- section,
+- subsection,
+- sub-subsection,
+- sub-sub-subsection,
+- sub-sub-sub-subsection,
+- paragraph,
+- subparagraph,
+- sentence.
+
+This hierarchy gives every piece of ordinary prose a location in the document
+tree. A sentence belongs to a paragraph. A paragraph belongs to a section-like
+division. A section belongs to a larger division. All divisions belong to the
+document.
+
+The hierarchy does not imply that every document must use every level. A short
+document may contain only a document, paragraphs, and sentences. A book-like
+document may contain chapters, sections, subsections, and deeper nested
+divisions. Sapphire should support both without forcing empty or artificial
+levels.
+
+When a level is skipped, Sapphire should still preserve the author's declared
+structure, but the parser should make the resulting hierarchy explicit. For
+example, a document may move from a section directly to a sub-subsection. That
+may be allowed, warned about, or normalized depending on the validation mode,
+but it should never be silently mistaken for mere styling.
+
+
+2.1.2 Document
+--------------
+
+The document is the root semantic unit. Every Sapphire source produces exactly
+one document root, even when the source is later embedded inside another
+document.
+
+The document root establishes:
+
+- the top-level scope,
+- the order of all contained semantic units,
+- global metadata,
+- global identifiers,
+- the default style and structural environment,
+- the boundary of parsing and validation.
+
+The document is not the same as a file. A file may contain one document, a
+fragment of a document, or supporting definitions imported by a document. The
+semantic document is the complete interpreted object after includes,
+definitions, and declared relationships have been resolved.
+
+
+2.1.3 Chapter
+-------------
+
+A chapter is a major division of a document. It is intended for large-scale
+organization, especially in long documents such as books, manuals, legal
+collections, research texts, or design specifications.
+
+A chapter may contain:
+
+- a required title,
+- an optional identifier,
+- optional numbering metadata,
+- sections,
+- paragraphs,
+- structural objects,
+- non-standard semantic regions,
+- local metadata.
+
+A chapter must have a non-empty title. It may also have an explicit identifier
+or numbering metadata, but neither of those replaces the title. Numbering may
+support navigation, export, or rendering, but the semantic fact is that the
+content belongs to a titled chapter-level division.
+
+Not every document needs chapters. Sapphire should not require a chapter level
+for short documents.
+
+
+2.1.4 Section Levels
+--------------------
+
+Sections and subsections form the main outline of the document.
+
+Sapphire recognizes the following section-like semantic units:
+
+- section,
+- subsection,
+- sub-subsection,
+- sub-sub-subsection,
+- sub-sub-sub-subsection.
+
+These names are intentionally explicit at the author-facing level. They make the
+depth of a region visible without requiring the reader to infer meaning from
+font size.
+
+Sapphire uses the term "Level" to refer to the absolute hierarchical rank 
+(1–6), which corresponds directly to the number of '#' markers. 
+The term "Depth" refers to the relative distance from the document root 
+in the Abstract Syntax Tree (AST). Using distinct terms for rank and 
+nesting distance prevents ambiguity for developers and authors.
+
+Hierarchy Mapping:
+- Level 1 (Chapter): 1 '#' marker.
+- Level 2 (Section): 2 '#' markers.
+- Level 3 (Subsection): 3 '#' markers.
+- Level 4 (Sub-subsection): 4 '#' markers.
+- Level 5 (Sub-sub-subsection): 5 '#' markers.
+- Level 6 (Sub-sub-sub-subsection): 6 '#' markers.
+
+The semantic role is the same: each is an outline division with a parent, a
+position among siblings, and a scope containing all content until the next
+appropriate boundary.
+
+A section-like unit should be able to carry:
+
+- a required title,
+- an optional identifier,
+- optional numbering metadata,
+- local metadata,
+- child sections,
+- paragraphs,
+- structural objects,
+- semantic tags.
+
+The title must be non-empty. Numbering and typography may support the rendered
+outline, but they do not create or replace the semantic title. The title is data
+inside the semantic unit. The heading's visual appearance is style. The
+existence of the section is semantics.
+
+
+2.1.5 Paragraph
+---------------
+
+A paragraph is the primary semantic unit of prose. It groups one or more
+sentences into a local unit of thought.
+
+In many text formats, a paragraph is recognized by blank lines or indentation.
+Sapphire may use similar surface syntax, but the semantic result should be
+clear: a paragraph is not just a visual block. It is a meaningful unit that can
+be selected, annotated, transformed, cited, summarized, or styled.
+
+A paragraph may contain:
+
+- sentences,
+- inline structural elements,
+- inline semantic tags,
+- references,
+- emphasis or other style markers,
+- embedded anchors.
+
+A paragraph should usually belong to the nearest open section-like container,
+chapter, or document root.
+
+
+2.1.6 Subparagraph
+------------------
+
+A subparagraph is a semantic division inside a paragraph-like or clause-like
+region. It is useful when an author needs finer structure than a paragraph but
+does not want to promote the content to a section.
+
+Subparagraphs are common in:
+
+- legal writing,
+- technical standards,
+- requirements documents,
+- formal specifications,
+- dense explanatory prose.
+
+A subparagraph should preserve its relationship to the parent paragraph or
+clause. It may be numbered, lettered, bulleted, or visually indented, but those
+are rendering choices. The semantic role is that it is a subordinate prose unit
+inside a larger thought.
+
+Sapphire should distinguish a subparagraph from a list item when the author's
+intent differs. A list item is primarily a member of a list structure. A
+subparagraph is primarily a subordinate semantic unit of prose.
+
+
+2.1.7 Sentence
+--------------
+
+A sentence is the smallest standard semantic unit of prose recognized by
+Sapphire.
+
+Sentence recognition is inherently imperfect. Periods may appear in
+abbreviations, decimals, initials, URLs, file names, and code fragments.
+Different languages and writing systems use different sentence conventions.
+Therefore, Sapphire should treat automatic sentence detection as useful but not
+infallible.
+
+When sentence boundaries matter, the author or parser should be able to make
+them explicit.
+
+Sentences matter because they are useful for:
+
+- summarization,
+- quotation,
+- annotation,
+- translation,
+- linguistic analysis,
+- precise references,
+- automated rewriting.
+
+A sentence belongs to a paragraph or subparagraph unless a specialized
+structural context defines different rules.
+
+
+2.1.8 Recognition and Definition
+--------------------------------
+
+Sapphire must distinguish recognition from definition.
+
+Recognition is the process of detecting a semantic unit from syntax. For
+example, a parser may recognize that a line introduces a section or that a block
+of prose forms a paragraph.
+
+Definition is the meaning Sapphire assigns after recognition. For example, once
+a region is recognized as a section, Sapphire knows that it creates a new
+outline scope, may contain child sections, may receive an identifier, and may be
+included in navigation.
+
+This distinction matters because different surface syntaxes may produce the
+same semantic result. A chapter may be written with one notation today and a
+different notation tomorrow, but both should produce a chapter node in the
+semantic tree.
+
+The parser should therefore produce semantic objects, not merely formatted
+lines.
+
+
+2.1.9 Standard Semantic Requirements
+------------------------------------
+
+For every standard semantic unit, Sapphire should preserve:
+
+- its type,
+- its raw content,
+- its normalized content,
+- its parent,
+- its children,
+- its order among siblings,
+- its source location when available,
+- its identifier when provided,
+- its attached non-standard semantic tags,
+- its attached style or structural information.
+
+This allows the same document to be rendered, searched, indexed, summarized,
+validated, exported, or transformed without losing the author's intent.
+
+The minimum promise is simple:
+
+If the author declares meaning, Sapphire should keep it as meaning.
+
+2.1.10 Syntax
+-------------
+
+Every standard semantic fragment above paragraph level must have a title,
+except for the document root itself.
+
+Sapphire recognizes six titled standard levels:
+
+- chapter: level 1,
+- section: level 2,
+- subsection: level 3,
+- sub-subsection: level 4,
+- sub-sub-subsection: level 5,
+- sub-sub-sub-subsection: level 6.
+
+A titled fragment is introduced by a heading. Sapphire supports two heading
+forms:
+
+- inline heading form,
+- delimiter heading form.
+
+In the inline heading form, the title is surrounded by a matching number of `#`
+symbols on both sides.
+
+In the delimiter heading form, the opening delimiter appears on its own line,
+the title appears on the next line, and the closing delimiter appears on the
+following line.
+
+In both forms, the opening and closing marker counts must match. The number of
+`#` symbols equals the semantic level.
+
+Examples:
+
+```sapphire
+# Chapter Title #
+
+## Section Title ##
+
+### Subsection Title ###
+
+#### Sub-subsection Title ####
+
+####
+Sub-subsection Title
+####
+
+##### Sub-sub-subsection Title #####
+
+###### Sub-sub-sub-subsection Title ######
+```
+
+The title must not be empty. In the inline form, whitespace may appear between
+the marker and the title. In the delimiter form, delimiter lines should contain
+only the marker and optional surrounding whitespace. In both forms, the marker
+itself determines the semantic level.
+
+
+2.1.10.1 Fragment Scope
+-----------------------
+
+A titled semantic fragment continues until one of the following is encountered:
+
+- the end of the document,
+- another title of the same level,
+- another title of a higher parent level.
+
+In this context, "higher level" means closer to the document root. A chapter is
+higher than a section. A section is higher than a subsection. Numerically, a
+higher parent level has a smaller level number.
+
+For example:
+
+- a new `### Subsection ###` closes the previous subsection and starts a sibling
+  subsection,
+- a new `## Section ##` closes the current subsection and the current section,
+  then starts a sibling section,
+- a new `#### Sub-subsection ####` inside a subsection starts a child fragment.
+
+Blank lines do not define the end of a section-like fragment. Headings define
+section scope. However, authors are encouraged to place at least two blank lines
+before a new heading when ending a larger fragment. This makes the source easier
+to read and gives future tooling a clean synchronization point.
+
+
+2.1.10.2 Example
+----------------
+
+```sapphire
+# Chapter Title #
+
+This prose belongs directly to the chapter. Since it has no section title of
+its own, Sapphire treats it as a paragraph inside the chapter.
+
+
+## First Section ##
+
+This paragraph belongs to the first section.
+
+
+### First Subsection ###
+
+This paragraph belongs to the first subsection.
+
+
+### Second Subsection ###
+
+The previous subsection closes when this heading is encountered, because this
+heading has the same level.
+
+
+## Second Section ##
+
+The previous subsection and the previous section both close when this heading
+is encountered, because this heading is a higher parent level than a subsection.
+```
+
+The semantic tree produced by the example is:
+
+```text
+document
+  chapter: Chapter Title
+    paragraph
+    section: First Section
+      paragraph
+      subsection: First Subsection
+        paragraph
+      subsection: Second Subsection
+        paragraph
+    section: Second Section
+      paragraph
+```
+
+
+2.1.10.3 Paragraph Syntax
+-------------------------
+
+Paragraphs and subparagraphs do not require titles.
+
+A paragraph is recognized as a continuous run of prose that ends when Sapphire
+encounters one of the following:
+
+- a blank line,
+- a titled semantic fragment,
+- a structural block,
+- the end of the document.
+
+A single blank line is enough to end a paragraph. Additional blank lines may be
+preserved as source spacing or ignored by a renderer, depending on the rendering
+mode.
+
+Example:
+
+```sapphire
+This is one paragraph. It may wrap across multiple physical lines in the source
+without becoming multiple paragraphs.
+
+This is a second paragraph because a blank line appears before it.
+```
+
+
+2.1.10.4 Subparagraph Syntax
+----------------------------
+
+A subparagraph is a subordinate prose unit inside a larger paragraph-like or
+clause-like region.
+
+Subparagraphs are recognized by a period followed by a newline (.\n), 
+ignoring any trailing spaces before the newline. 
+
+**Note on Ambiguity:** In Version 1, the parser does not distinguish between 
+a true Subparagraph and a sentence with a "hard wrap" (common in version 
+control workflows). There is currently no distinction between these cases. 
+This overlap is recognized as a current limitation and will be resolved in 
+a future version. Authors should be aware that .\n currently forces a 
+semantic break regardless of intent.
+
+
+==================================================
+
+3. Structure
+============
+
+Structure describes document objects that require specialized representation or
+behavior. A structural object is not ordinary prose, even when its source form
+is written as text.
+
+Examples include images, tables, diagrams, code blocks, videos, embedded
+content, interactive regions, mathematical displays, and forms. Each of these
+objects may contain data, may carry semantic meaning, and may receive style, but
+its structural identity remains distinct.
+
+The structural layer answers:
+
+"What kind of object is this, and how should Sapphire construct it?"
+
+
+3.1 Structural Block Syntax
+---------------------------
+
+A structural block is introduced by a delimiter line made of at least eight `~`
+symbols.
+
+The opening delimiter must be closed by another delimiter line with exactly the
+same number of `~` symbols.
+
+General form:
+
+```sapphire
+~~~~~~~~
+! makeCOMMAND
+content
+~~~~~~~~
+```
+
+The delimiter rules are:
+
+- the opening delimiter must contain at least eight `~` symbols, except 
+  for `makeCANVAS` which requires exactly eight (Section 3.8). Using 
+  any other number for a Canvas block is a syntax error.
+- the closing delimiter must contain the same number of `~` symbols as the
+  opening delimiter,
+- delimiter lines should contain only `~` symbols and optional surrounding
+  whitespace,
+- the structural block continues until the matching closing delimiter is found,
+- blank lines inside the block are part of the structural block content.
+
+If the content of a structural block must contain a line of eight `~` symbols,
+the author should use a longer delimiter for the block.
+
+Example:
+
+```sapphire
+~~~~~~~~~~~~
+! makeCOMMAND
+This content may safely contain a line such as:
+~~~~~~~~
+because the closing delimiter requires twelve `~` symbols.
+~~~~~~~~~~~~
+```
+
+
+3.2 Make Command
+----------------
+
+The first meaningful line after the opening delimiter must be a make command.
+
+A make command begins with `!`, followed by optional whitespace, followed by a
+case-sensitive command name.
+
+Examples:
+
+```sapphire
+! makeIMAGE
+!makeVIDEO
+```
+
+Both command forms are valid. Whitespace after `!` is optional.
+
+The command name tells Sapphire what structural object to construct. Command
+names are case-sensitive. Therefore, `makeIMAGE`, `makeImage`, and `makeimage`
+are different command names.
+
+The make command belongs to the structural layer. It is not rendered as visible
+content unless a renderer is explicitly instructed to show source information.
+
+
+3.3 Structural Content
+----------------------
+
+The content after the make command is the structural payload. Its meaning
+depends on the command.
+
+Structural content may contain:
+
+- style tags,
+- key-value fields,
+- paths,
+- base64 strings,
+- labels,
+- captions,
+- raw embedded data,
+- nested source fragments,
+- command-specific options.
+
+A structural block may be attached to the surrounding semantic tree. For
+example, an image block inside a section belongs to that section unless another
+rule explicitly changes its scope.
+
+The parser should preserve:
+
+- the command name,
+- the raw content of the block,
+- the parsed command-specific fields,
+- the source location,
+- the opening delimiter length,
+- any attached semantic or style information.
+
+
+3.4 Image Structure
+-------------------
+
+An image is created with the `makeIMAGE` command.
+
+Path form:
+
+```sapphire
+~~~~~~~~
+! makeIMAGE
+[styleTag]
+
+path: /path/to/image
+
+label: image_label
+caption: Image caption, with rendering controlled by the style tag.
+~~~~~~~~
+```
+
+Base64 form:
+
+```sapphire
+~~~~~~~~
+! makeIMAGE
+[styleTag]
+base64: iVBORw0KGgoAAAANSUhEUgAA...
+
+label: image_label
+caption: Image caption, with rendering controlled by the style tag.
+~~~~~~~~
+```
+
+The `makeIMAGE` command is case-sensitive.
+
+The image payload may contain:
+
+- a style tag,
+- either a `path` field or a `base64` field,
+- an optional blank line for readability,
+- an optional `label` field,
+- an optional `caption` field.
+
+The `path` field identifies the image resource. The value may be absolute,
+relative, or resolved by a project-specific asset system.
+
+The `base64` field contains encoded image data directly inside the document.
+The `path` and `base64` fields are mutually exclusive. An image structure must
+provide exactly one of them.
+
+The `[styleTag]` field will be defined in the style section. It may control
+rendering details such as size, alignment, border treatment, caption behavior,
+responsive behavior, or other visual properties. The style tag should not
+replace the structural identity of the image.
+
+The `label` field gives the image a stable machine-readable name. Labels must
+be alphanumeric, may contain `_`, must not contain spaces, and must not begin
+with a digit.
+
+In pattern form, a label is:
+
+```text
+[A-Za-z_][A-Za-z0-9_]*
+```
+
+Valid labels:
+
+- `image00_11`,
+- `figureA`,
+- `hero_image`.
+
+Invalid labels:
+
+- `00image`,
+- `image label`,
+- `image-label`.
+
+Labels may be used for navigation, cross-reference, lists of figures,
+accessibility tooling, or editor interfaces.
+
+The `caption` field gives the image explanatory text. Caption rendering is
+controlled by style, but the caption itself is content attached to the image
+structure.
+
+Example:
+
+```sapphire
+~~~~~~~~
+! makeIMAGE
+[heroWide]
+path: /assets/diagrams/document-layers.png
+
+label: document_layer_diagram
+caption: A visual map of Sapphire's data, semantic, structural, and style layers.
+~~~~~~~~
+```
+
+The structural result is an image object, not a paragraph containing image-like
+instructions.
+
+
+3.5 Vector Structure
+--------------------
+
+A vector image is created with the `makeVECTOR` command.
+
+The `makeVECTOR` command is case-sensitive.
+
+A vector may be provided in one of two ways:
+
+- by path,
+- by inline code.
+
+
+3.5.1 Vector by Path
+--------------------
+
+The path form references an external vector resource.
+
+General form:
+
+```sapphire
+~~~~~~~~
+! makeVECTOR
+[tag]
+path: /assets/diagrams/document-layers.svg
+
+label: vector00_11
+caption: A visual map of Sapphire's data, semantic, structural, and style layers.
+~~~~~~~~
+```
+
+The vector path may point to an SVG file, a PostScript file, or another vector
+format supported by the renderer.
+
+
+3.5.2 Vector by Inline Code
+---------------------------
+
+The inline code form embeds vector source directly inside the structural block.
+
+General form:
+
+```sapphire
+~~~~~~~~
+! makeVECTOR
+[tag]
+code:
+
+
+<svg viewBox="0 0 120 80">
+  <path d="M10 70 L60 10 L110 70 Z" />
+</svg>
+
+
+label: vector00_11
+caption: A visual map of Sapphire's data, semantic, structural, and style layers.
+~~~~~~~~
+```
+
+The `code:` field begins an inline vector payload. The payload begins after two
+newlines and ends before the next two-newline break followed by a recognized
+field such as `label:` or `caption:`.
+
+At first, Sapphire should support SVG and PostScript code in this field.
+Sapphire's own vector language may be added later.
+
+When supported by the chosen vector format and renderer, inline vector code may
+include animation, including 3D animation.
+
+The vector payload may contain:
+
+- a style tag,
+- either a `path` field or a `code` field,
+- an optional `label` field,
+- an optional `caption` field.
+
+The `label` field follows the same rules as image labels: it must be
+alphanumeric, may contain `_`, must not contain spaces, and must not begin with
+a digit.
+
+The structural result is a vector object, not a paragraph containing vector-like
+instructions.
+
+
+3.6 Video Structure
+-------------------
+
+A video is created with the `makeVIDEO` command.
+
+The `makeVIDEO` command is case-sensitive.
+
+A video may be provided in one of two ways:
+
+- by path,
+- by base64 string.
+
+Path form:
+
+```sapphire
+~~~~~~~~
+!makeVIDEO
+[tag]
+path: /assets/video/document-layers.mp4
+
+label: video00_11
+caption: A video explanation of Sapphire's document layers.
+~~~~~~~~
+```
+
+Base64 form:
+
+```sapphire
+~~~~~~~~
+!makeVIDEO
+[tag]
+base64: AAAAGGZ0eXBtcDQyAAAAAG1wNDFtcDQyaXNvbQ...
+
+label: video00_11
+caption: A video explanation of Sapphire's document layers.
+~~~~~~~~
+```
+
+The video payload may contain:
+
+- a style tag,
+- either a `path` field or a `base64` field,
+- an optional `label` field,
+- an optional `caption` field.
+
+The `path` field identifies the video resource. The value may be absolute,
+relative, or resolved by a project-specific asset system.
+
+The `base64` field contains encoded video data directly inside the document.
+The `path` and `base64` fields are mutually exclusive. A video structure must
+provide exactly one of them.
+
+The `label` field follows the same rules as image labels: it must be
+alphanumeric, may contain `_`, must not contain spaces, and must not begin with
+a digit.
+
+The `caption` field gives the video explanatory text. Caption rendering is
+controlled by style, but the caption itself is content attached to the video
+structure.
+
+The structural result is a video object, not a paragraph containing video-like
+instructions.
+
+
+3.7 Audio Structure
+-------------------
+
+Audio is created with the `makeAUDIO` command.
+
+The `makeAUDIO` command is case-sensitive.
+
+Audio may be provided in one of three ways:
+
+- by path,
+- by base64 string,
+- by MIDI.
+
+Path form:
+
+```sapphire
+~~~~~~~~
+!makeAUDIO
+[tag]
+path: /assets/audio/document-theme.wav
+
+label: audio00_11
+caption: A short audio cue for the document.
+~~~~~~~~
+```
+
+Base64 form:
+
+```sapphire
+~~~~~~~~
+!makeAUDIO
+[tag]
+base64: UklGRiQAAABXQVZFZm10IBAAAAABAAEA...
+
+label: audio00_11
+caption: A short audio cue for the document.
+~~~~~~~~
+```
+
+MIDI form:
+
+```sapphire
+~~~~~~~~
+!makeAUDIO
+[tag]
+midi:
+
+
+MThd...
+
+
+label: audio00_11
+caption: A short MIDI cue for the document.
+~~~~~~~~
+```
+
+The audio payload may contain:
+
+- a style tag,
+- exactly one of `path`, `base64`, or `midi`,
+- an optional `label` field,
+- an optional `caption` field.
+
+The `path` field identifies the audio resource. The value may be absolute,
+relative, or resolved by a project-specific asset system.
+
+The `base64` field contains encoded audio data directly inside the document.
+
+The `midi:` field begins an inline MIDI payload. The payload begins after two
+newlines and ends before the next two-newline break followed by a recognized
+field such as `label:` or `caption:`.
+
+At first, Sapphire should support MIDI in this field. Sapphire's own audio
+language may be added later.
+
+The `label` field follows the same rules as image labels: it must be
+alphanumeric, may contain `_`, must not contain spaces, and must not begin with
+a digit.
+
+The `caption` field gives the audio explanatory text. Caption rendering is
+controlled by style, but the caption itself is content attached to the audio
+structure.
+
+The structural result is an audio object, not a paragraph containing audio-like
+instructions.
+
+
+3.8 Canvas Structure
+--------------------
+
+A canvas is created with the `makeCANVAS` command.
+
+The `makeCANVAS` command is case-sensitive.
+
+A canvas is a layered structural region. It may freely combine image, vector,
+video, and audio objects inside one coordinate and timing environment. Visual
+objects may be placed on top of one another. Audio objects may be attached to
+the same canvas timeline or interaction model.
+
+The canvas-level style tag applies to the canvas as a whole. A style tag inside
+an inner object applies only to that inner object.
+
+A canvas block MUST use exactly eight `~` symbols for its opening and 
+closing delimiters. Using any other number (e.g., 10 or 12) is a syntax 
+error for this command.
+
+Canvas inner objects use their own structural delimiters. Inside a canvas, an
+inner object delimiter must contain at least twelve `~` symbols, and the inner
+object must close with the same number of `~` symbols used to open it.
+
+Allowed initial inner object commands are:
+
+- `makeIMAGE`,
+- `makeVECTOR`,
+- `makeVIDEO`,
+- `makeAUDIO`.
+
+General form:
+
+```sapphire
+~~~~~~~~
+!makeCANVAS
+[tag]
+
+~~~~~~~~~~~~
+!makeIMAGE
+[imageTag]
+base64: iVBORw0KGgoAAAANSUhEUgAA...
+
+label: canvas_image
+caption: Raster layer inside the canvas.
+~~~~~~~~~~~~
+
+~~~~~~~~~~~~
+!makeVECTOR
+[vectorTag]
+code:
+
+
+<svg viewBox="0 0 120 80">
+  <path d="M10 70 L60 10 L110 70 Z" />
+</svg>
+
+
+label: canvas_vector
+caption: Vector layer inside the canvas.
+~~~~~~~~~~~~
+~~~~~~~~
+```
+
+The outer canvas closes only when the eight-tilde canvas delimiter is
+encountered. Inner object delimiters do not close the canvas.
+
+Within a canvas, source order defines the default layer order. Later visual
+objects are rendered above earlier visual objects unless a style rule gives an
+explicit layer or z-order. More detailed canvas layout, timing, and interaction
+rules will be defined in the style and interaction sections.
+
+
+3.9 REPL Structure
+------------------
+
+An interactive REPL section is created with the `makeREPL` command.
+
+The `makeREPL` command is case-sensitive.
+
+A REPL block creates an interactive region controlled by a runtime engine. The
+renderer may provide the engine directly, package it with the document, or call
+an external API exposed by the engine.
+
+General form:
+
+```sapphire
+~~~~~~~~
+!makeREPL
+[tag]
+
+type: terminal
+engine: julia
+~~~~~~~~
+```
+
+The REPL payload may contain:
+
+- a style tag,
+- a required `type` field,
+- a required `engine` field,
+- optional command-specific fields.
+
+The initial `type` values are:
+
+- `terminal`,
+- `terminal+canvas`.
+
+The `terminal` type creates a terminal emulator.
+
+The `terminal+canvas` type creates a terminal emulator together with an
+initially empty canvas. The terminal and canvas layout is controlled by the
+style tag.
+
+The `engine` field names the REPL engine. For example, a document may request a
+Julia engine, a Python engine, or another engine that the renderer knows how to
+provide or contact.
+
+Example:
+
+```sapphire
+~~~~~~~~
+!makeREPL
+[twoPaneConsole]
+type: terminal+canvas
+engine: julia
+~~~~~~~~
+```
+
+The structural result is an interactive REPL object, not a static code block.
+
+
+3.10 Environment Structure
+--------------------------
+
+An environment is created with the `makeENV` command.
+
+The `makeENV` command is case-sensitive.
+
+An environment block provides a generic container for content that serves a specific
+contextual purpose, such as quotes, theorems, or boilerplate text. It is designed to
+handle both templated data and structured sub-semantic fragments.
+
+General form:
+
+```sapphire
+~~~~~~~~
+!makeENV
+[tag]
+
+text:
+
+
+<multi-line content here>
+
+
+source: <datasource_identifier>
+~~~~~~~~
+```
+
+The `makeENV` payload may contain:
+
+- A style tag: Governs the overall container presentation.
+- A required `text` field: Contains the primary content.
+- An optional `source` field: Identifies an external data source or context.
+
+The `text:` field initiates a multi-line content block. The payload begins after
+two newlines and ends before the next two-newline break followed by a recognized 
+field (like `source:`) or the closing delimiter.
+
+The content within the `text` field supports two primary interaction modes:
+
+1.  **Placeholder-driven text:**
+    The content contains `${placeholders}` intended to be resolved by the renderer 
+    using the context defined in the `source` field.
+
+    Example:
+    ```sapphire
+    ~~~~~~~~
+    !makeENV
+    [quote]
+    text:
+
+    "To be or not to be, that is the ${question}."
+
+    source: hamlet_data
+    ~~~~~~~~
+    ```
+
+2.  **Sub-semantic fragments:**
+    The content uses inline segments `|| ... ||` to define internal logic. In this 
+    context, the segments act as sub-semantic fragments. For instance, a "Theorem" 
+    semantic block can be divided into a "Name" and "Details" sub-fragment.
+
+    Example:
+    ```sapphire
+    ~~~~~~~~
+    !makeENV
+    [theoremStyle]
+    text:
+
+    || [nameStyle] Pythagorean Theorem: ||
+    || [detailStyle] a² + b² = c² ||
+
+    ~~~~~~~~
+    ```
+
+The structural result is an environment object containing the content and associated 
+metadata, preserving the relationship between the parent semantic fragment and its 
+internal sub-fragments.
+
+
+3.11 Table Structure
+--------------------
+
+A table is created with the `makeTABLE` command. 
+
+The `makeTABLE` command is case-sensitive. Sapphire tables use explicit row 
+delimiters and positional cell alignment to handle multi-line content 
+deterministically.
+
+General form:
+
+```sapphire
+~~~~~~~~
+!makeTABLE
+[styleTag]
+
+::::::::
+:: Header 1   :: Header 2   ::
+::::::::
+:: Row 1 Col 1:: Row 1 Col 2::
+:: continuing :: continuing ::
+::::::::
+
+~~~~~~~~
+```
+
+The `makeTABLE` payload follows these rules:
+
+1.  **Row Delimiters:** 
+    A line containing at least eight colons (`::::::::`) indicates a row boundary. 
+    The length of the first row delimiter established in the table establishes 
+    the required character count for the entire structural block. All 
+    subsequent row delimiters must match this length exactly; any variation 
+    results in a **Syntax Error**.
+
+2.  **Column Delimiters:** 
+    Cells are introduced by a double-colon (`::`).
+    - An opening `::` starts a new cell.
+    - A closing `::` terminates the current cell and immediately starts a new 
+      cell, unless it is followed only by whitespace and a newline.
+
+3.  **Multi-line Cell Alignment:** 
+    If a double-colon (`::`) appears at the exact same character column index 
+    on consecutive lines within the same row boundary, the parser treats the 
+    content as a continuation of the same cell. If a `::` appears on a 
+    subsequent line at a different character column index, it is a 
+    **Syntax Error** (Undefined Behavior). Users are advised not to "hack" 
+    this alignment.
+
+    Example of multi-line logic:
+    ```text
+    :: This is cell 1 :: This is cell 2 ::
+    :: and its line 2 :: and its line 2 ::
+    ```
+    Because the `::` markers align vertically, "and its line 2" is appended to 
+    the respective buffers for Cell 1 and Cell 2.
+
+4.  **Whitespace Handling:** 
+    Leading and trailing whitespace within a cell (between the `::` delimiters 
+    and the content) is trimmed by the parser. To enforce a space, the `$_` 
+    escape sequence must be used.
+
+5.  **Termination:** 
+    The table structure terminates when the matching structural tilde fence 
+    (`~~~~~~~~`) is encountered. If a row delimiter (`::::::::`) is followed 
+    by a blank line and then the closing tilde fence, the table is considered 
+    complete.
+
+6.  **Table Styling and Semantic Markers:** 
+    Sapphire provides three levels of granular styling/tagging within a table:
+
+    - **Cell Styling:** Placing a `[tag]` immediately after a `::` delimiter 
+      applies that style/semantic meaning to the specific cell.
+      *Example:* `:: [highlight] Content ::`
+
+    - **Row Styling:** The marker `-| [tag]` can be placed on any line 
+      within a row's boundaries (typically to the right of the last column 
+      delimiter). It applies the style to the entire horizontal row.
+      *Example:* `:: cell 1 :: cell 2 :: -| [rowStyle]`
+
+    - **Column Styling:** The marker `_|_ [tag]` is used to define 
+      column-wide styles. This marker must appear below the final row 
+      delimiter but before the closing tilde fence. The `_|_` symbol and 
+      the `[tag]` must fall within the horizontal character column interval 
+      (width) of the target column as defined by the `::` markers.
+
+    Example of full table styling:
+    ```sapphire
+    ~~~~~~~~
+    !makeTABLE
+    ::::::::
+    :: [header] Name :: [header] Details :: -| [headerRow]
+    ::::::::
+    :: Pythagorean   :: a² + b² = c²     ::
+    :: Theorem       ::                  ::
+    ::::::::
+       _|_ [boldCol]    _|_ [italicCol]
+    ~~~~~~~~
+    ```
+
+7.  **Structural Nesting:** 
+    A table cell may contain other `!make` structural blocks (e.g., `makeIMAGE`, 
+    `makeVECTOR`, `makeENV`). These nested objects must follow standard 
+    structural nesting rules, including increased tilde-fence lengths to 
+    distinguish them from the parent table's scope. 
+    *Note:* Nested `makeTABLE` objects are not supported in Version 1.
+
+8.  **Deterministic Spanning (Row and Column):**
+    CorTex supports row and column spanning through the omission of delimiters 
+    while maintaining global index alignment.
+    
+    - **Column Spanning:** A cell spans multiple columns if intermediate `::` 
+      markers are omitted. The right-hand `::` must align with the character 
+      index of a column established elsewhere in the structural block.
+    - **Row Spanning:** A cell spans multiple rows if the row delimiter 
+      (which must match the established global length) is omitted between 
+      specific column indices on consecutive lines, allowing content to 
+      continue into the next vertical region.
+    
+    **The Alignment Constraint:** Every `::` delimiter used in a spanning 
+    configuration must align vertically with an established character index. 
+    If a delimiter is placed at a "new" index not defined by the grid's 
+    primary columns, the parser will throw a **Syntax Error**.
+
+    *Valid Spanning Example:*
+    ```text
+    ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    :: cell that spans e3 cols, we remvoed the double colon ::
+    ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    :: cell           ::   cell         ::   cell           ::
+    ::::::::::::::::::::                ::::::::::::::::::::::
+    ::  another       :: row span cont. ::   new            ::
+    ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    ```
+
+The structural result is a table object containing an array of row objects, 
+each containing an array of cell buffers.
+
+
+3.12 List Structure
+-------------------
+
+A list is created with the `makeLIST` command.
+
+The `makeLIST` command is case-sensitive. CorTex lists use explicit item
+markers to handle multi-line content and nested structural objects without
+the ambiguity of indentation-based parsing.
+
+General form:
+
+```sapphire
+~~~~~~~~
+!makeLIST
+[styleTag]
+
+|> List item 1
+|> List item 2
+   spanning multiple lines
+   including empty lines
+
+|> List item 3
+~~~~~~~~
+```
+
+The `makeLIST` payload follows these rules:
+
+1.  **Item Marker:** Each list item is introduced by the `|>` sequence.
+2.  **Item Termination:** An item buffer continues until the parser encounters 
+    the next `|>` marker or the closing structural tilde fence.
+3.  **Multi-line Content:** Content is appended to the current item buffer 
+    regardless of indentation. Empty lines are preserved. The renderer is 
+    responsible for normalizing tab alignment based on the item marker's position.
+4.  **Nesting:** Lists can be nested by using standard CorTex structural 
+    nesting rules (increasing fence length).
+
+
+3.13 Accordion Structure
+------------------------
+
+An accordion (collapsible region) is created with the `makeACCORDION` command.
+
+The `makeACCORDION` command is case-sensitive. It defines a relationship 
+between a visible summary and a hidden detail region.
+
+General form:
+
+```sapphire
+~~~~~~~~
+!makeACCORDION
+[styleTag]
+
+|> Summary Text
+|-> Detail content
+    can be multi-line
+    and include || [tag] styles ||
+
+|> Next Summary
+|-> Next Details
+~~~~~~~~
+```
+
+The `makeACCORDION` payload follows these rules:
+
+1.  **Summary Marker:** A summary is introduced by the `|>` marker.
+2.  **Details Marker:** The associated detail content is introduced by the 
+    `|->` marker.
+3.  **State Logic:** 
+    - A summary buffer terminates when the `|->` marker is encountered.
+    - A details buffer terminates when a new `|>` marker is encountered or 
+      the structural block closes.
+4.  **Syntax Errors:** 
+    - Encountering a `|->` marker immediately following another `|->` marker 
+      is a Syntax Error.
+    - Encountering a `|>` marker immediately following another `|>` marker 
+      (without an intervening detail marker) is a Syntax Error.
+5.  **Content Capability:** Both summaries and details support multi-line text, 
+    empty lines, and inline semantic/style tags.
+
+
+4. Style Application
+====================
+
+Styles are defined in associated `.corst` files and applied to the `.cortx` 
+document through explicit tag names. Style application follows a strict 
+"Style Stack" logic to resolve property conflicts.
+
+
+4.1 Semantic Fragment Styling
+-----------------------------
+
+Titled semantic fragments (Chapters, Sections, etc.) are explicitly delimited. 
+Styling for the entire fragment title is declared immediately after the 
+opening marker.
+
+Syntax:
+`# [tag1, tag2] Chapter Title #`
+
+To style only a portion of a titled fragment, inline styling delimiters are 
+used within the title text.
+
+Example:
+`## Section Title || [styletag] this (|| [nestedTag] part ||) is styled || ##`
+
+
+4.2 Prose and Inline Styling
+----------------------------
+
+Prose units (Paragraphs and Subparagraphs) are not always explicitly 
+delimited by structural markers. To apply styles to these regions or 
+sub-fragments within them, Sapphire uses the pipe delimiter syntax.
+
+1.  **Standard Style Block:** `|| [tag1, tag2] content ||`
+    Used for inline styling or wrapping entire paragraphs.
+    
+2.  **Nested Style Block:** `(|| [tag1] content ||)`
+    Used to apply styles within an already open style block. These must 
+    always be balanced.
+
+
+4.3 Structural Block Styling
+----------------------------
+
+Inside structural "Holes" (`~~~~~~~~`), styles are applied via a tag list 
+located on the line immediately following the `!make` command.
+
+Example:
+```sapphire
+~~~~~~~~
+!makeIMAGE
+[styletag, nextStyleTag]
+
+path: /assets/hero.png
+~~~~~~~~
+```
+
+
+4.4 Precedence and The Style Stack
+----------------------------------
+
+Sapphire resolves style property conflicts (e.g., two tags defining different 
+font colors) using two rules of precedence:
+
+1.  **Rightmost Precedence (Tag Lists):**
+    When multiple tags are provided within a single set of brackets `[...]`, 
+    they are evaluated from left to right. The rightmost tag is applied 
+    last, meaning its properties override any conflicting properties 
+    defined by tags to its left.
+    
+    *Example:* `[redFont, blueFont]` results in blue text, as `blueFont` 
+    overrides `redFont`.
+
+2.  **Innermost Precedence (Nesting):**
+    When style blocks are nested using the `(|| ... ||)` syntax, the 
+    properties of the innermost block take priority over those of the 
+    parent blocks.
+    
+    *Example:*
+    `|| [Style1] Outer (|| [Style2] Inner ||) Outer ||`
+    In the "Inner" region, `Style2` overrides `Style1`.
+
+3.  **Inheritance:**
+    Any property not explicitly defined by the highest-precedence tag is 
+    inherited from the next tag in the stack, or finally from the 
+    Global Reference Model.
+
+
+4.5 Syntax Rules for Tags
+-------------------------
+
+- **Separation:** Multiple tags within brackets must be comma-separated.
+- **Whitespace:** Whitespace around commas and within brackets is 
+  normalized and ignored by the parser.
+
+4.6 Summary of Application
+--------------------------
+
+Context              | Syntax
+---------------------|----------------------------------------------------
+Semantic Title       | `# [tag1, tag2] Title #`
+Inline/Prose         | `|| [tag1, tag2] content ||`
+Nested Inline        | `(|| [tag1, tag2] content ||)`
+Structural Block     | `!makeCOMMAND [tag1, tag2]`
+---------------------|----------------------------------------------------
+
+
+5. Style Definitions (.corst)
+=============================
+
+Style files use a hierarchical bracket syntax. Definitions are categorized 
+by their target scope: Global, Regional, or Local.
+
+
+5.1 Global Styles
+-----------------
+
+The `global !!` block defines attributes for the entire document manifold 
+and the primary flow curve.
+
+Syntax:
+```corst
+[
+  global !! 
+  [
+     page : [
+          size  : ISO A4
+          color : RGBHEX ECEEDD
+     ]
+     flowcurve : string "TV Scan"
+  ]
+]
+```
+
+
+5.2 Regional Styles (Fragments and Blocks)
+------------------------------------------
+
+Regional styles apply to semantic fragments (Chapters, Sections) or 
+structural blocks (Images, Tables). These define the environment for 
+all sub-items.
+
+Syntax:
+```corst
+[ 
+  chapterTag !! 
+  [
+      background : [
+             image : path "/assets/bg.png"
+             color : RGBHEX AABBCC
+      ]
+      flowcurve : string "Hilbert"
+      padding   : px 24
+      margin    : px 40
+      layout    : string "TBD" // Dictates sub-item positioning
+   ]
+]
+```
+
+
+5.3 Local Styles (Inline)
+-------------------------
+
+Local styles are intended for inline application within paragraphs or 
+titles. They focus on typographic and highlight properties.
+
+Syntax:
+```corst
+[
+    inlinestyletag !! 
+    [
+        font : [
+            color : RGBHEX 000000
+            face  : string "Inter"
+        ]
+        background : [
+            color : RGBHEX FFFF00 // Highlighting
+        ]
+    ]
+]
+```
+
+
+5.4 Attribute Rules
+-------------------
+
+1.  **Categories:** Attributes are grouped into categories (e.g., `font : [ ... ]`).
+2.  **Assignments:** Property names are followed by a colon `:` and a typed value.
+3.  **Marker:** Tag declarations must be followed by the `!!` marker.
+4.  **Whitespace:** Indentation is for human readability and is ignored by 
+    the parser.
+
+
+5.5 Future Development
+----------------------
+
+The Sapphire Style System is currently under active development. The 
+attribute list is non-exhaustive. Future versions will introduce:
+- Layout logic for nested fragments.
+- Dynamic interaction properties for REPLs and Canvases.
+- Animation timing for vector objects.
+
+
+Escapes:
+
+\\ : backslash
+\# : hash 
+\! : exclaimation
+\[ : open bracket
+\] : close bracket
+\` : back quote
+
+Ignored sequences: 
+`||` : double pipe
+`|->` : right arrow 
+`|>` : righttriangle  
+`::` : double colon
+`-|` : htack
+`_|_`: vtack
+`~~~~` : tilde chain 
+`(||`  : open bracket and pipe
+`||)`  : close bracket and pipe
+
+
+Everything inside a pair of `` will be treated as a verbatim,
+it will not trigger anything
