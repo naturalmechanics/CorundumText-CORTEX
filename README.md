@@ -1818,3 +1818,53 @@ Ignored sequences:
 
 Everything inside a pair of `` will be treated as a verbatim,
 it will not trigger anything
+
+
+6. Comparison with Markdown Standards
+=====================================
+
+While Sapphire (CorTex) shares the goal of human-readability with Markdown 
+(CommonMark/GFM), it departs from Markdown's design philosophy in several 
+critical ways.
+
+6.1 Semantic Rigor vs. Visual Shorthand
+---------------------------------------
+Markdown was originally designed as a shorthand for HTML. Its primary 
+purpose is to make writing for the web easier. Sapphire is designed as 
+a document data format. 
+- **Hierarchy:** Markdown headings (`#`) are often used based on how 
+  they look (font size). Sapphire headings define strict semantic scopes 
+  and parent-child relationships in an AST.
+- **Symmetry:** Sapphire requires balanced markers (`# Title #`) or 
+  delimiters. This eliminates the "dangling" look of Markdown and 
+  makes parsing more deterministic.
+
+6.2 Structural "Holes" vs. Fenced Blocks
+----------------------------------------
+Markdown uses "Fenced Code Blocks" primarily for syntax highlighting. 
+Sapphire introduces "Structural Holes" (`~~~~~~~~`) with the `!make` 
+command protocol. 
+- **Extensibility:** In Markdown, rendering an image or a table is 
+  handled by distinct, often inconsistent syntax. In Sapphire, every 
+  complex object (Image, Video, REPL, Canvas) follows the same 
+  `!make` structural pattern, providing a unified API for the compiler.
+
+6.3 Table Determinism
+---------------------
+GFM-style tables are notoriously difficult to manage for multi-line 
+content or complex alignment. 
+- **Grid Logic:** Sapphire tables use vertical alignment and coordinate-
+  based constraints. If a column marker doesn't align, the parser 
+  throws a fatal error. Markdown parsers typically try to "guess" 
+  intent, leading to inconsistent rendering across different platforms.
+
+6.4 The Styling Layer
+---------------------
+Markdown conflates style with content (e.g., `*italics*` is both 
+a semantic emphasis and a visual instruction). 
+- **Decoupling:** Sapphire moves all visual properties to `.corst` 
+  files. The `.cortx` document only contains content and `[tags]`. 
+  This allows the same document to be rendered as a PDF, a 
+  terminal-based TUI, or a high-end web experience without 
+  modifying the source text. This follows the classic software 
+  engineering principle of "Separation of Concerns" (SoC).
